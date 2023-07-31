@@ -1,14 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:providerpattern/screens/list.dart';
 import '/providers/auth_store.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '/screens/main_list.dart';
 
 /// 로그인 페이지
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   LoginPage({super.key});
 
   @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  var token;
+  final storage = FlutterSecureStorage();
+
+  _asyncMethod() async {
+    if (await storage.read(key: "token") != null) {
+      if(!mounted) return;
+      Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _asyncMethod();
+  }
+
+  @override
   Widget build(BuildContext context) {
+
     final authStore = Provider.of<AuthStore>(context);
 
     return Scaffold(
@@ -68,7 +92,7 @@ class LoginPage extends StatelessWidget {
                         if (authStore.token != null) {
                           Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => MainList())
+                              MaterialPageRoute(builder: (context) => MainList()) // 로그인 이동
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
