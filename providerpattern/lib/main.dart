@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '/providers/auth_store.dart';
+import '/screens/login.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+      MaterialApp(
+          title: 'Provider Example',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: ChangeNotifierProvider(
+              create: (context) => AuthStore(),
+              child: MyApp()
+          )
+      )
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -9,6 +23,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return LoginPage();
   }
 }
