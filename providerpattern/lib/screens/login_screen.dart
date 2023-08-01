@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '/providers/auth_store.dart';
+import '../services/auth_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '/screens/main_list.dart';
+import '/screens/main_list_screen.dart';
 
 /// 로그인 페이지
 class LoginPage extends StatefulWidget {
@@ -14,7 +14,6 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  var token;
   final storage = FlutterSecureStorage();
 
   _asyncMethod() async {
@@ -104,7 +103,9 @@ class _LoginPageState extends State<LoginPage> {
                     }),
                   ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+
+                },
                 child: Text(
                   'have no account? sign up',
                   style: TextStyle(color: Colors.grey[600]),

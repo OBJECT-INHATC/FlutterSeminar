@@ -1,11 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
-import '/screens/main_list.dart';
-import '/providers/list_store.dart';
-import '/providers/auth_store.dart';
-import '/screens/login.dart';
+import 'models/auth_model.dart';
+import 'services/auth_service.dart';
+import '/screens/login_screen.dart';
 
 void main() {
   runApp(
@@ -17,10 +16,7 @@ void main() {
       home: MultiProvider(
         providers: [
           ChangeNotifierProvider(
-            create: (context) => AuthStore(),
-          ),
-          ChangeNotifierProvider(
-            create: (context) => ListStore(),
+            create: (context) => AuthStore( AuthModel( Dio())),
           ),
         ],
         child: MyApp(),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '/screens/login.dart';
+import '/screens/login_screen.dart';
 
+/// 메인 리스트 화면
 class MainList extends StatelessWidget {
   const MainList({super.key});
 
