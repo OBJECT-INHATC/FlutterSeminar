@@ -38,6 +38,9 @@ dependencies:
   provider: # 상태 관리 패키지
   logger: # 로그 출력 패키지
   retrofit: ^4.0.1 # http 통신을 위한 패키지
+  firebase_core: ^2.15.0 # firebase core 패키지
+  firebase_auth: ^4.7.2 # firebase auth 패키지
+  cloud_firestore: ^4.8.4 # firebase firestore 패키지
 
 
   # The following adds the Cupertino Icons font to your application.
