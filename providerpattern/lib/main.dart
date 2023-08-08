@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/firebase_options.dart';
 
-import 'models/auth_model.dart';
-import 'services/auth_service.dart';
-import '/screens/login_screen.dart';
+import 'models/m_auth.dart';
+import 'providers/p_auth.dart';
+import '/screens/s_login.dart';
 
 void main() async{
 

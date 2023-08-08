@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '/models/auth_model.dart';
+import '/models/m_auth.dart';
+
 
 
 /// 사용자 정보 상태 관리 Provider 클래스
@@ -12,9 +13,11 @@ class AuthStore extends ChangeNotifier {
   var name;
   var token;
   var loginMsg;
+  var gender;
 
   /// 생성자 의존성 주입
   final AuthModel _authModel;
+
   AuthStore(this._authModel);
 
   /// 로그인
@@ -43,6 +46,8 @@ class AuthStore extends ChangeNotifier {
       throw Exception('데이터 로드에 실패했습니다');
     }
   }
+
+
 
 
 

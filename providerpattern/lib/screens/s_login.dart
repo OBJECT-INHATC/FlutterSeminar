@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
+import '../providers/p_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '/screens/main_list_screen.dart';
+import '/screens/s_main.dart';
+import '/screens/s_register.dart';
 
 /// 로그인 페이지
 class LoginPage extends StatefulWidget {
@@ -104,7 +105,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
               TextButton(
                 onPressed: () {
-
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RegisterPage(authStore: authStore),
+                    ),
+                  );
                 },
                 child: Text(
                   'have no account? sign up',
