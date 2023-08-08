@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:providerpattern/screens/s_home.dart';
 import 'package:providerpattern/service/sv_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import '../providers/p_auth.dart';
@@ -24,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
   _asyncMethod() async {
     if (await storage.read(key: "email") != null && await storage.read(key: "fullName") != null) {
       if(!mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
     }
   }
 
@@ -101,7 +102,8 @@ class _LoginPageState extends State<LoginPage> {
                           await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
                               .gettingUserData(authStore.email);
                           authStore.login(snapshot.docs[0]['fullName'], snapshot.docs[0]['email']);
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
+                          if (!mounted) return;
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
                         }
                         else{
                           ScaffoldMessenger.of(context).showSnackBar(

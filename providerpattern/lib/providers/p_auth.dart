@@ -17,7 +17,6 @@ class AuthStore extends ChangeNotifier {
 
   /// 생성자 의존성 주입
   final AuthModel _authModel;
-
   AuthStore(this._authModel);
 
   /// 로그인
@@ -27,9 +26,12 @@ class AuthStore extends ChangeNotifier {
 
     final fullName = await storage.read(key: 'fullName');
     final storedEmail = await storage.read(key: 'email');
+    this.name = name;
+    this.email = email;
 
     if (fullName != null && storedEmail != null) {
       // 이미 fullName과 email이 저장되어 있는 경우
+      notifyListeners();
       return true;
     } else {
       // 저장되어 있지 않은 경우 fullName과 email 저장 후 반환
