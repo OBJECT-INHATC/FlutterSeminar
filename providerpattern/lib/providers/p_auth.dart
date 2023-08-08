@@ -21,34 +21,29 @@ class AuthStore extends ChangeNotifier {
   AuthStore(this._authModel);
 
   /// 로그인
-  Future<void> login() async {
+  Future<bool> login(String name, String email) async {
+
     final storage = FlutterSecureStorage();
 
-    try {
-      token = await _authModel.login(email, password);
+    final fullName = await storage.read(key: 'fullName');
+    final storedEmail = await storage.read(key: 'email');
 
-      if (token != null) {
-        print('토큰과 함께 요청 성공: $token');
+    if (fullName != null && storedEmail != null) {
+      // 이미 fullName과 email이 저장되어 있는 경우
+      return true;
+    } else {
+      // 저장되어 있지 않은 경우 fullName과 email 저장 후 반환
+      await storage.deleteAll();
+      await storage.write(key: 'fullName', value: name);
+      await storage.write(key: 'email', value: email);
+      notifyListeners();
 
-        storage.deleteAll(); // 기존 토큰 삭제
-        storage.write(key: 'token', value: token);
-        notifyListeners();
-
-      } else {
-        print('로그인 실패');
-        token = null;
-        storage.deleteAll(); // 기존 토큰 삭제
-        notifyListeners();
-
-      }
-    } catch (e) {
-      print('예외 발생: $e');
-      throw Exception('데이터 로드에 실패했습니다');
+      return true; // 또는 다른 값을 반환하거나, 반환하지 않을 수 있음
     }
+
   }
 
-
-
-
-
 }
+
+
+

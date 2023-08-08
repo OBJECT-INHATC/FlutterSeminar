@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:providerpattern/service/sv_auth.dart';
 import '../providers/p_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -18,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final storage = FlutterSecureStorage();
 
   _asyncMethod() async {
-    if (await storage.read(key: "token") != null) {
+    if (await storage.read(key: "email") != null && await storage.read(key: "fullName") != null) {
       if(!mounted) return;
       Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
     }
@@ -88,19 +89,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: const Text('Log In'),
                     onPressed: () async {
-                      await authStore.login().then((_) {
-                        if (authStore.token != null) {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => MainList()) // 로그인 이동
-                          );
-                        } else {
+                      AuthService().loginWithUserNameandPassword(
+                          authStore.email,
+                          authStore.password
+                      ).then((value)
+                      {
+                        if(value == true){
+                          authStore.login(authStore.name, authStore.email);
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
+                        }
+                        else{
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(authStore.loginMsg),
-                            ),
-                          );
-                        }});
+                              SnackBar(content: Text(value.toString())));
+                        }
+                      });
                     }),
                   ),
               TextButton(

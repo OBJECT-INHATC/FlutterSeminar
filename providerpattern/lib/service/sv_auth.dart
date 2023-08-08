@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService {
   final FirebaseAuth firebaseAuth = FirebaseAuth.instance;
+  final storage = FlutterSecureStorage();
 
   // login
   Future loginWithUserNameandPassword(String email, String password) async {

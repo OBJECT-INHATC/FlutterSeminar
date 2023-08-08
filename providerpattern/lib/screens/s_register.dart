@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import '/service/sv_auth.dart';
 
 class RegisterPage extends StatelessWidget{
   final AuthStore authStore;
-
   RegisterPage({super.key, required this.authStore});
 
   // 미디어 쿼리 사용을 위한 함수
@@ -194,14 +192,16 @@ class RegisterPage extends StatelessWidget{
                   onPressed: () {
                     // sv_auth의 register 함수를 호출하여 회원가입을 시도합니다.
                     AuthService().registerUserWithEmailandPassword(
-                      authStore.name,
-                      authStore.email,
-                      authStore.password
-                    ).then((value) {
-                      if(value == true) {
+                        authStore.name,
+                        authStore.email,
+                        authStore.password
+                    ).then((value) async {
+                      if (value == true) {
+                        authStore.login(authStore.email, authStore.password);
                         Navigator.pop(context);
                       }
                     });
+
                   }
               ),
             ),
