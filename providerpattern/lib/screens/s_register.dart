@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import '/service/sv_auth.dart';
 
 class RegisterPage extends StatelessWidget{
-  final AuthStore authStore;
-  RegisterPage({super.key, required this.authStore});
+
+  RegisterPage({super.key});
 
   // 미디어 쿼리 사용을 위한 함수
   double mediaHeight(BuildContext context, double scale) => MediaQuery.of(context).size.height * scale;
@@ -12,6 +13,8 @@ class RegisterPage extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
+
+    final authStore = Provider.of<AuthStore>(context);
 
     return Scaffold(
       body: Center(
@@ -197,7 +200,6 @@ class RegisterPage extends StatelessWidget{
                         authStore.password
                     ).then((value) async {
                       if (value == true) {
-                        authStore.login(authStore.email, authStore.password);
                         Navigator.pop(context);
                       }
                     });

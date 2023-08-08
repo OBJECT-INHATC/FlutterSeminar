@@ -1,6 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/service/sv_auth.dart';
+import 'package:providerpattern/service/sv_database.dart';
 import '../providers/p_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -92,10 +95,12 @@ class _LoginPageState extends State<LoginPage> {
                       AuthService().loginWithUserNameandPassword(
                           authStore.email,
                           authStore.password
-                      ).then((value)
-                      {
+                      ).then((value) async {
                         if(value == true){
-                          authStore.login(authStore.name, authStore.email);
+                          QuerySnapshot snapshot =
+                          await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+                              .gettingUserData(authStore.email);
+                          authStore.login(snapshot.docs[0]['fullName'], snapshot.docs[0]['email']);
                           Navigator.push(context, MaterialPageRoute(builder: (context) => MainList()));
                         }
                         else{
@@ -110,7 +115,7 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RegisterPage(authStore: authStore),
+                      builder: (context) => RegisterPage(),
                     ),
                   );
                 },

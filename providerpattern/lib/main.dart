@@ -16,20 +16,19 @@ void main() async{
   );
 
   runApp(
-    MaterialApp(
-      title: 'Provider Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MultiProvider(
+      MultiProvider(
         providers: [
           ChangeNotifierProvider(
             create: (context) => AuthStore( AuthModel( Dio())),
           ),
         ],
-        child: MyApp(),
+        child: MaterialApp(
+          title: 'Provider Example',
+          theme: ThemeData(
+          primarySwatch: Colors.blue,
+          ), home: MyApp(),
       ),
-    ),
+  )
   );
 }
 
