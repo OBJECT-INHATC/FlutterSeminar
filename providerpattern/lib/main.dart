@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/firebase_options.dart';
+import 'package:providerpattern/providers/p_group.dart';
 
 import 'models/m_auth.dart';
 import 'providers/p_auth.dart';
@@ -20,6 +21,9 @@ void main() async{
         providers: [
           ChangeNotifierProvider(
             create: (context) => AuthStore( AuthModel( Dio())),
+          ),
+          ChangeNotifierProvider(
+            create: (context) => GroupStore()
           ),
         ],
         child: MaterialApp(

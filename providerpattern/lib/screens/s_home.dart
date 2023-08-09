@@ -1,16 +1,58 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
+import 'package:providerpattern/providers/p_group.dart';
 import 'package:providerpattern/screens/s_login.dart';
 import 'package:providerpattern/service/sv_auth.dart';
+import 'package:providerpattern/service/sv_database.dart';
+import 'package:providerpattern/widgets/w_grouptile.dart';
+import 'package:providerpattern/widgets/w_sncakbar.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
 
-  AuthService authService = AuthService();
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+
+  final storage = FlutterSecureStorage();
+  String? fullName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    getGroups();
+  }
+
+  getGroups() async {
+    await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+        .getUserGroups().then((snapshot) {
+      Provider.of<GroupStore>(context, listen: false).groups = snapshot;
+    });
+
+    fullName = await storage.read(key: 'fullName');
+
+  }
+
+  // string manipulation
+  String getId(String res) {
+    return res.substring(0, res.indexOf("_"));
+  }
+
+  String getName(String res) {
+    return res.substring(res.indexOf("_") + 1);
+  }
 
   @override
   Widget build(BuildContext context) {
+
+    final groupStore = Provider.of<GroupStore>(context);
+    print(groupStore.groups);
+
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -102,7 +144,7 @@ class HomePage extends StatelessWidget {
                         ),
                         IconButton(
                           onPressed: () async {
-                            await authService.signOut();
+                            await AuthService().signOut();
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (context) => LoginPage(),
@@ -131,10 +173,45 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      body: noGroupWidget(),
-      floatingActionButton: FloatingActionButton(
+      body: StreamBuilder(
+        stream: groupStore.groups,
+        builder: (context, AsyncSnapshot snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // 스트림 데이터 로딩 중
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasData) {
+            if (snapshot.data['groups'] != null) {
+              if (snapshot.data['groups'].length != 0) {
+                return ListView.builder(
+                  itemCount: snapshot.data['groups'].length,
+                  itemBuilder: (context, index) {
+                    int reverseIndex = snapshot.data['groups'].length - index - 1;
+                    return GroupTile(
+                      groupId: getId(snapshot.data['groups'][reverseIndex]),
+                      groupName: getName(snapshot.data['groups'][reverseIndex]),
+                      userName: snapshot.data['fullName'],
+                    );
+                  },
+                );
+              } else {
+                return noGroupWidget();
+              }
+            } else {
+              return noGroupWidget();
+            }
+          } else {
+            // 스트림 에러 등으로 인한 데이터 없음
+            return Center(
+              child: Text('No data available'),
+            );
+          }
+        },
+      ),
+        floatingActionButton: FloatingActionButton(
         onPressed: () {
-          popUpDialog(context);
+          popUpDialog(context, groupStore);
         },
         elevation: 0,
         backgroundColor: Theme.of(context).primaryColor,
@@ -147,7 +224,9 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  popUpDialog(BuildContext context) {
+
+
+  popUpDialog(BuildContext context, final groupStore) {
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -162,7 +241,9 @@ class HomePage extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
-                  onChanged: (val) {},
+                  onChanged: (val) {
+                    groupStore.groupName = val;
+                  },
                   style: const TextStyle(color: Colors.black),
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
@@ -192,21 +273,17 @@ class HomePage extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  // if (groupName != "") {
-                  //   setState(() {
-                  //     _isLoading = true;
-                  //   });
-                  //   DatabaseService(
-                  //       uid: FirebaseAuth.instance.currentUser!.uid)
-                  //       .createGroup(userName,
-                  //       FirebaseAuth.instance.currentUser!.uid, groupName)
-                  //       .whenComplete(() {
-                  //     _isLoading = false;
-                  //   });
-                  //   Navigator.of(context).pop();
-                  //   showSnackbar(
-                  //       context, Colors.green, "Group created successfully.");
-                  // }
+                  if (groupStore.groupName != "") {
+                    DatabaseService(
+                        uid: FirebaseAuth.instance.currentUser!.uid)
+                        .createGroup(fullName!,
+                        FirebaseAuth.instance.currentUser!.uid, groupStore.groupName)
+                        .whenComplete(() {
+                    });
+                    Navigator.of(context).pop();
+                    showSnackbar(
+                        context, Colors.green, "Group created successfully.");
+                  }
                 },
                 child: const Text("CREATE"),
               ),
@@ -243,4 +320,7 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+
+
 }
