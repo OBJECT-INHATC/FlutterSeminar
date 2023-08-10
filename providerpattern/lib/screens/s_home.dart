@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/providers/p_group.dart';
 import 'package:providerpattern/screens/s_login.dart';
+import 'package:providerpattern/screens/s_search.dart';
 import 'package:providerpattern/service/sv_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import 'package:providerpattern/widgets/w_grouptile.dart';
@@ -57,7 +58,14 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         actions: [
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchPage(),
+                ),
+              );
+            },
             icon: const Icon(
               Icons.search,
             ),
