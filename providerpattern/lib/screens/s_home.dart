@@ -31,7 +31,7 @@ class _HomePageState extends State<HomePage> {
   getGroups() async {
     await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
         .getUserGroups().then((snapshot) {
-      Provider.of<GroupStore>(context, listen: false).groups = snapshot;
+      Provider.of<GroupStore>(context, listen: false).setGroups(snapshot);
     });
 
     fullName = await storage.read(key: 'fullName');
@@ -176,12 +176,8 @@ class _HomePageState extends State<HomePage> {
       body: StreamBuilder(
         stream: groupStore.groups,
         builder: (context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // 스트림 데이터 로딩 중
-            return Center(
-              child: CircularProgressIndicator(),
-            );
-          } else if (snapshot.hasData) {
+          // make some checks
+          if (snapshot.hasData) {
             if (snapshot.data['groups'] != null) {
               if (snapshot.data['groups'].length != 0) {
                 return ListView.builder(
@@ -189,10 +185,9 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     int reverseIndex = snapshot.data['groups'].length - index - 1;
                     return GroupTile(
-                      groupId: getId(snapshot.data['groups'][reverseIndex]),
-                      groupName: getName(snapshot.data['groups'][reverseIndex]),
-                      userName: snapshot.data['fullName'],
-                    );
+                        groupId: getId(snapshot.data['groups'][reverseIndex]),
+                        groupName: getName(snapshot.data['groups'][reverseIndex]),
+                        userName: snapshot.data['fullName']);
                   },
                 );
               } else {
@@ -202,13 +197,14 @@ class _HomePageState extends State<HomePage> {
               return noGroupWidget();
             }
           } else {
-            // 스트림 에러 등으로 인한 데이터 없음
             return Center(
-              child: Text('No data available'),
+              child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor),
             );
           }
         },
-      ),
+      )
+      ,
         floatingActionButton: FloatingActionButton(
         onPressed: () {
           popUpDialog(context, groupStore);

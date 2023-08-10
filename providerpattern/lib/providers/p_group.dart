@@ -7,4 +7,11 @@ class GroupStore extends ChangeNotifier{
   Stream? groups;
   String groupName = '';
 
+
+  // Method to update groups
+  void setGroups(Stream? newGroups) {
+    groups = newGroups;
+    notifyListeners();
+  }
+
 }

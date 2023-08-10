@@ -32,7 +32,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _asyncMethod();
+    // _asyncMethod();
   }
 
   @override
