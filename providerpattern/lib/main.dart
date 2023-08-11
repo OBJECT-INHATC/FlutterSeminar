@@ -10,16 +10,15 @@ import 'models/m_auth.dart';
 import 'providers/p_auth.dart';
 import '/screens/s_login.dart';
 
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print("백그라운드 메시지 처리 ${message.notification!.body!}");
+  await Firebase.initializeApp();
+  // 세부 내용이 필요한 경우 추가...
 }
 
 void initializeNotification() async {
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  // 안드로이드에서 알림을 받을 수 있도록 설정
   await flutterLocalNotificationsPlugin
       .resolvePlatformSpecificImplementation<
       AndroidFlutterLocalNotificationsPlugin>()
@@ -27,23 +26,60 @@ void initializeNotification() async {
       'high_importance_channel', 'high_importance_notification',
       importance: Importance.max));
 
-  // 앱이 실행중일 때 알림을 받을 수 있도록 설정
-  await flutterLocalNotificationsPlugin.initialize(const InitializationSettings(
-    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-  ));
+  await flutterLocalNotificationsPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings("@mipmap/ic_launcher"),
+    )
+  );
 
-  // 알림을 클릭했을 때 실행할 액션 설정
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    announcement: true,
+    badge: true,
+    carPlay: true,
+    criticalAlert: true,
+    provisional: true,
+    sound: true,
+  );
+
   await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
     alert: true,
     badge: true,
     sound: true,
   );
+
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
+    RemoteNotification? notification = message.notification;
+
+    if (notification != null) {
+      flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'high_importance_channel',
+              'high_importance_notification',
+              importance: Importance.max,
+            ),
+          ),
+          payload: message.data['test_paremeter1']);
+      print("수신자 측 메시지 수신");
+    }
+  });
+
+  RemoteMessage? message = await FirebaseMessaging.instance.getInitialMessage();
+  if (message != null) {
+    // 액션 부분 -> 파라미터는 message.data['test_parameter1'] 이런 방식으로...
+  }
 }
+
 
 Future<void> main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   initializeNotification();
 
   runApp(
@@ -85,29 +121,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // 디바이스 토큰을 가져오는 함수 호출
     getMyDeviceToken();
-
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      RemoteNotification? notification = message.notification;
-
-      if (notification != null) {
-        FlutterLocalNotificationsPlugin().show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'high_importance_channel',
-              'high_importance_notification',
-              importance: Importance.max,
-            ),
-          ),
-        );
-        setState(() {
-          messageString = message.notification!.body!;
-          print("Foreground 메시지 수신: $messageString");
-        });
-      }
-    });
 
     super.initState();
   }
