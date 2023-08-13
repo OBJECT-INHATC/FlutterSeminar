@@ -59,6 +59,13 @@ class _ChatPageState extends State<ChatPage> {
               onPressed: () {},
               icon: const Icon(Icons.info))
         ],
+          leading:IconButton(
+            icon: const Icon(Icons.exit_to_app_sharp),
+            onPressed: () {
+              DatabaseService().toggleGroupJoin(widget.groupId, widget.userName, widget.groupName);
+              Navigator.pop(context);
+            },
+          )
       ),
       body: Stack(
         children: <Widget>[
