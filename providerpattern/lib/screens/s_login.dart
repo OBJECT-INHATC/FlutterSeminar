@@ -102,6 +102,8 @@ class _LoginPageState extends State<LoginPage> {
                           await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
                               .gettingUserData(authStore.email);
                           authStore.login(snapshot.docs[0]['fullName'], snapshot.docs[0]['email']);
+                          await storage.write(key: "email", value: snapshot.docs[0]['email']);
+                          await storage.write(key: "fullName", value: snapshot.docs[0]['fullName']);
                           if (!mounted) return;
                           Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
                         }

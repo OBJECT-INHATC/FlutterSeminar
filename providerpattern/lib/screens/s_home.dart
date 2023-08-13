@@ -153,6 +153,9 @@ class _HomePageState extends State<HomePage> {
                         IconButton(
                           onPressed: () async {
                             await AuthService().signOut();
+                            await storage.deleteAll();
+
+                            if(!mounted) return;
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
                                 builder: (context) => LoginPage(),

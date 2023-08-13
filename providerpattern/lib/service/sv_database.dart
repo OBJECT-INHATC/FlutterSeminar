@@ -41,6 +41,8 @@ class DatabaseService {
       "groupIcon": "",
       "admin": "${id}_$userName",
       "members": [],
+      "maxMembers" : 3,
+      "nowMembers" : 1,
       "groupId": "",
       "recentMessage": "",
       "recentMessageSender": "",
@@ -97,33 +99,85 @@ class DatabaseService {
     }
   }
 
-  // toggling the group join/exit
-  Future toggleGroupJoin(
-      String groupId, String userName, String groupName) async {
-    // doc reference
+  // // toggling the group join/exit
+  // Future toggleGroupJoin(
+  //     String groupId, String userName, String groupName) async {
+  //   // doc reference
+  //   DocumentReference userDocumentReference = userCollection.doc(uid);
+  //   DocumentReference groupDocumentReference = groupCollection.doc(groupId);
+  //
+  //   DocumentSnapshot documentSnapshot = await userDocumentReference.get();
+  //   List<dynamic> groups = await documentSnapshot['groups'];
+  //
+  //   // if user has our groups -> then remove then or also in other part re join
+  //   if (groups.contains("${groupId}_$groupName")) {
+  //     await userDocumentReference.update({
+  //       "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
+  //     });
+  //     await groupDocumentReference.update({
+  //       "members": FieldValue.arrayRemove(["${uid}_$userName"])
+  //     });
+  //     await groupDocumentReference.update({
+  //       "nowMembers": FieldValue.increment(-1)
+  //     });
+  //   } else {
+  //     await userDocumentReference.update({
+  //       "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
+  //     });
+  //     await groupDocumentReference.update({
+  //       "members": FieldValue.arrayUnion(["${uid}_$userName"])
+  //     });
+  //     await groupDocumentReference.update({
+  //       "nowMembers": FieldValue.increment(1)
+  //     });
+  //   }
+  // }
+
+  // toggling the group join/exit + transaction
+  Future<bool> toggleGroupJoin(String groupId, String userName, String groupName) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
 
-    DocumentSnapshot documentSnapshot = await userDocumentReference.get();
-    List<dynamic> groups = await documentSnapshot['groups'];
+    DocumentSnapshot groupSnapshot = await groupDocumentReference.get();
+    int currentMembers = groupSnapshot['nowMembers'];
+    int maxMembers = groupSnapshot['maxMembers'];
 
-    // if user has our groups -> then remove then or also in other part re join
-    if (groups.contains("${groupId}_$groupName")) {
-      await userDocumentReference.update({
-        "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
-      });
-      await groupDocumentReference.update({
-        "members": FieldValue.arrayRemove(["${uid}_$userName"])
-      });
+    if (currentMembers < maxMembers) {
+      try {
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          DocumentSnapshot userSnapshot = await transaction.get(userDocumentReference);
+          List<dynamic> groups = userSnapshot['groups'];
+
+          if (groups.contains("${groupId}_$groupName")) {
+            transaction.update(userDocumentReference, {
+              "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
+            });
+            transaction.update(groupDocumentReference, {
+              "members": FieldValue.arrayRemove(["${uid}_$userName"]),
+              "nowMembers": FieldValue.increment(-1)
+            });
+          } else {
+            transaction.update(userDocumentReference, {
+              "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
+            });
+            transaction.update(groupDocumentReference, {
+              "members": FieldValue.arrayUnion(["${uid}_$userName"]),
+              "nowMembers": FieldValue.increment(1)
+            });
+          }
+        });
+
+        return true; // Successful action
+      } catch (e) {
+        print('Transaction failed: $e');
+        return false; // Failed action
+      }
     } else {
-      await userDocumentReference.update({
-        "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
-      });
-      await groupDocumentReference.update({
-        "members": FieldValue.arrayUnion(["${uid}_$userName"])
-      });
+      print('Group is full, cannot join.');
+      return false; // Group is full
     }
   }
+
 
   // send message
   sendMessage(String groupId, Map<String, dynamic> chatMessageData) async {

@@ -175,16 +175,18 @@ class _SearchPageState extends State<SearchPage> {
       subtitle: Text("Admin: ${getName(admin)}"),
       trailing: InkWell(
         onTap: () async {
-          await DatabaseService(uid: user!.uid)
+          bool success = await DatabaseService(uid: user!.uid)
               .toggleGroupJoin(groupId, userName, groupName);
-          if (isJoined) {
-            setState(() {
+
+          setState(() {
+            if (success) {
               isJoined = !isJoined;
-            });
-
-            if(!mounted) return;
-            showSnackbar(context, Colors.green, "Successfully joined he group");
-
+              showSnackbar(context, isJoined ? Colors.green : Colors.red,
+                  isJoined ? "Successfully joined the group" : "Left the group $groupName");
+            } else {
+              showSnackbar(context, Colors.red, "Group is full, cannot join.");
+            }
+          });
             // Future.delayed(const Duration(seconds: 2), () {
             //   nextScreen(
             //       context,
@@ -193,12 +195,6 @@ class _SearchPageState extends State<SearchPage> {
             //           groupName: groupName,
             //           userName: userName));
             // });
-          } else {
-            setState(() {
-              isJoined = !isJoined;
-              showSnackbar(context, Colors.red, "Left the group $groupName");
-            });
-          }
         },
         child: isJoined
             ? Container(
