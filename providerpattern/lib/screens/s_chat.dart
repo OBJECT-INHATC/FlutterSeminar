@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import 'package:providerpattern/widgets/w_messagetile.dart';
 
@@ -26,14 +29,19 @@ class _ChatPageState extends State<ChatPage> {
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   String admin = "";
+  User? user;
 
   @override
   void initState() {
     getChatandAdmin();
+    getCurrentUser();
+    print(widget.groupId);
+    print(widget.groupName);
+    print(widget.userName);
     super.initState();
   }
 
-  getChatandAdmin() {
+  getChatandAdmin(){
     DatabaseService().getChats(widget.groupId).then((val) {
       setState(() {
         chats = val;
@@ -44,10 +52,18 @@ class _ChatPageState extends State<ChatPage> {
         admin = val;
       });
     });
+
+  }
+
+  getCurrentUser() async {
+    user = FirebaseAuth.instance.currentUser;
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context){
+
+    final authStore = Provider.of<AuthStore>(context);
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -56,16 +72,45 @@ class _ChatPageState extends State<ChatPage> {
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
           IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.info))
-        ],
-          leading:IconButton(
             icon: const Icon(Icons.exit_to_app_sharp),
             onPressed: () {
-              DatabaseService().toggleGroupJoin(widget.groupId, widget.userName, widget.groupName);
-              Navigator.pop(context);
+              showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text("leave group"),
+                    content: const Text("Are you sure you want to leave this group?"),
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.cancel,
+                          color: Colors.red,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          await DatabaseService(uid: user!.uid).leaveGroup(
+                              widget.groupId,widget.userName, widget.groupName);
+                          if(!mounted) return;
+                          Navigator.pop(context);
+                          Navigator.pop(context);
+                        },
+                        icon: const Icon(
+                          Icons.done,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
           )
+        ],
       ),
       body: Stack(
         children: <Widget>[

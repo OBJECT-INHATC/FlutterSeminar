@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DatabaseService {
   final String? uid;
@@ -10,6 +11,8 @@ class DatabaseService {
 
   final CollectionReference groupCollection =
   FirebaseFirestore.instance.collection("groups");
+
+  final User? user = FirebaseAuth.instance.currentUser;
 
   // saving the userdata
   Future savingUserData(String fullName, String email) async {
@@ -99,6 +102,7 @@ class DatabaseService {
     }
   }
 
+
   // // toggling the group join/exit
   // Future toggleGroupJoin(
   //     String groupId, String userName, String groupName) async {
@@ -178,7 +182,6 @@ class DatabaseService {
     }
   }
 
-
   // send message
   sendMessage(String groupId, Map<String, dynamic> chatMessageData) async {
     groupCollection.doc(groupId).collection("messages").add(chatMessageData);
@@ -188,4 +191,42 @@ class DatabaseService {
       "recentMessageTime": chatMessageData['time'].toString(),
     });
   }
+
+  // Leaving a group -> 아직 오류임 수정 필요
+  Future leaveGroup(String groupId, String userName, String groupName) async {
+    DocumentReference userDocumentReference = userCollection.doc(uid);
+    DocumentReference groupDocumentReference = groupCollection.doc(groupId);
+
+    DocumentSnapshot userSnapshot = await userDocumentReference.get();
+    List<dynamic> groups = userSnapshot['groups'];
+
+    if (groups.contains("${groupId}_$groupName")) {
+      // Check if the user is the admin
+      DocumentSnapshot groupSnapshot = await groupDocumentReference.get();
+      String admin = groupSnapshot['admin'];
+
+      if (admin == "${uid}_$userName") {
+        // Delete the group if the user is the admin
+        await groupDocumentReference.delete();
+        await userDocumentReference.update({
+          "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
+        });
+      } else {
+        // User is not the admin, remove from the group
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          transaction.update(userDocumentReference, {
+            "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
+          });
+          transaction.update(groupDocumentReference, {
+            "members": FieldValue.arrayRemove(["${uid}_$userName"]),
+            "nowMembers": FieldValue.increment(-1)
+          });
+        });
+      }
+    } else {
+      print("User is not a member of the group");
+    }
+  }
+
+
 }
