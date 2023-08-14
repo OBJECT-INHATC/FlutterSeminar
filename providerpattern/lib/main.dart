@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_group.dart';
-
 import 'models/m_auth.dart';
 import 'providers/p_auth.dart';
 import '/screens/s_login.dart';
@@ -77,6 +77,7 @@ void initializeNotification() async {
 
 Future<void> main() async{
 
+  await dotenv.load(fileName: ".env"); // Replace with your custom file name
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -113,15 +114,17 @@ class _MyAppState extends State<MyApp> {
   var messageString = "";
 
   void getMyDeviceToken() async {
-    final token = await FirebaseMessaging.instance.getToken();
-    print("내 디바이스 토큰: $token");
+    var token = await FirebaseMessaging.instance.getToken();
+
+    if(!mounted) return;
+
+    await Provider.of<AuthStore>(context, listen: false).saveToken(token.toString());
   }
 
   @override
   void initState() {
     // 디바이스 토큰을 가져오는 함수 호출
     getMyDeviceToken();
-
     super.initState();
   }
 

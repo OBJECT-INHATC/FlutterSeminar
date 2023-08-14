@@ -45,6 +45,12 @@ class AuthStore extends ChangeNotifier {
 
   }
 
+  /// 토큰 저장
+  saveToken(String token) async {
+    this.token = token;
+    notifyListeners();
+  }
+
 }
 
 

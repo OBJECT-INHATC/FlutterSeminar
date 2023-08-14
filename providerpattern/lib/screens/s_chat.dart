@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
+import 'package:providerpattern/service/sv_fcm.dart';
 import 'package:providerpattern/widgets/w_messagetile.dart';
 
 
@@ -29,15 +30,13 @@ class _ChatPageState extends State<ChatPage> {
   Stream<QuerySnapshot>? chats;
   TextEditingController messageController = TextEditingController();
   String admin = "";
+  String token = "";
   User? user;
 
   @override
   void initState() {
-    getChatandAdmin();
-    getCurrentUser();
-    print(widget.groupId);
-    print(widget.groupName);
-    print(widget.userName);
+    getChatandAdmin(); // get the chat messages
+    getCurrentUserandToken(); // get the current user
     super.initState();
   }
 
@@ -52,18 +51,15 @@ class _ChatPageState extends State<ChatPage> {
         admin = val;
       });
     });
-
   }
 
-  getCurrentUser() async {
+  getCurrentUserandToken() async {
     user = FirebaseAuth.instance.currentUser;
+    token = await Provider.of<AuthStore>(context, listen: false).token;
   }
 
   @override
   Widget build(BuildContext context){
-
-    final authStore = Provider.of<AuthStore>(context);
-
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -94,7 +90,7 @@ class _ChatPageState extends State<ChatPage> {
                       IconButton(
                         onPressed: () async {
                           await DatabaseService(uid: user!.uid).leaveGroup(
-                              widget.groupId,widget.userName, widget.groupName);
+                              widget.groupId,widget.userName, widget.groupName, token);
                           if(!mounted) return;
                           Navigator.pop(context);
                           Navigator.pop(context);
@@ -114,7 +110,8 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Stack(
         children: <Widget>[
-          // chat messages here
+
+          /// 챗 메시지
           chatMessages(),
           Container(
             alignment: Alignment.bottomCenter,
@@ -174,8 +171,7 @@ class _ChatPageState extends State<ChatPage> {
             return MessageTile(
                 message: snapshot.data.docs[index]['message'],
                 sender: snapshot.data.docs[index]['sender'],
-                sentByMe: widget.userName ==
-                    snapshot.data.docs[index]['sender']);
+                sentByMe: widget.userName == snapshot.data.docs[index]['sender']);
           },
         )
             : Container();
@@ -191,7 +187,7 @@ class _ChatPageState extends State<ChatPage> {
         "time": DateTime.now().millisecondsSinceEpoch,
       };
 
-      DatabaseService().sendMessage(widget.groupId, chatMessageMap);
+      DatabaseService().sendMessage(widget.groupId, chatMessageMap, widget.groupName, token);
       setState(() {
         messageController.clear();
       });

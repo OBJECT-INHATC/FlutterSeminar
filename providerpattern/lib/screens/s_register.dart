@@ -197,7 +197,8 @@ class RegisterPage extends StatelessWidget{
                     AuthService().registerUserWithEmailandPassword(
                         authStore.name,
                         authStore.email,
-                        authStore.password
+                        authStore.password,
+                        authStore.token
                     ).then((value) async {
                       if (value == true) {
                         Navigator.pop(context);

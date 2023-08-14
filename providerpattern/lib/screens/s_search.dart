@@ -22,6 +22,7 @@ class _SearchPageState extends State<SearchPage> {
   TextEditingController searchController = TextEditingController();
   QuerySnapshot? searchSnapshot;
   String userName = '';
+  String token = '';
 
   bool hasUserSearched = false;
   bool isLoading = false;
@@ -32,14 +33,18 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     getCurrentUserIdandName();
+    getToken();
   }
 
   getCurrentUserIdandName() async {
 
     userName = await Provider.of<AuthStore>(context, listen: false).name;
-    print(userName);
     user = FirebaseAuth.instance.currentUser;
 
+  }
+
+  getToken() async{
+    token = await Provider.of<AuthStore>(context, listen: false).token;
   }
 
   String getName(String r) {
@@ -176,7 +181,7 @@ class _SearchPageState extends State<SearchPage> {
       trailing: InkWell(
         onTap: () async {
           bool success = await DatabaseService(uid: user!.uid)
-              .toggleGroupJoin(groupId, userName, groupName);
+              .toggleGroupJoin(groupId, userName, groupName,token);
 
           setState(() {
             if (success) {

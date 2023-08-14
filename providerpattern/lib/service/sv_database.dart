@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:providerpattern/service/sv_fcm.dart';
 
 class DatabaseService {
   final String? uid;
@@ -15,13 +16,14 @@ class DatabaseService {
   final User? user = FirebaseAuth.instance.currentUser;
 
   // saving the userdata
-  Future savingUserData(String fullName, String email) async {
+  Future savingUserData(String fullName, String email, String fcmToken) async {
     return await userCollection.doc(uid).set({
       "fullName": fullName,
       "email": email,
       "groups": [],
       "profilePic": "",
       "uid": uid,
+      "fcmToken": fcmToken,
     });
   }
 
@@ -38,7 +40,7 @@ class DatabaseService {
   }
 
   // creating a group
-  Future createGroup(String userName, String id, String groupName) async {
+  Future createGroup(String userName, String id, String groupName, String token) async {
     DocumentReference groupDocumentReference = await groupCollection.add({
       "groupName": groupName,
       "groupIcon": "",
@@ -52,7 +54,7 @@ class DatabaseService {
     });
     // update the members
     await groupDocumentReference.update({
-      "members": FieldValue.arrayUnion(["${uid}_$userName"]),
+      "members": FieldValue.arrayUnion(["${uid}_$userName-$token"]),
       "groupId": groupDocumentReference.id,
     });
 
@@ -138,13 +140,14 @@ class DatabaseService {
   // }
 
   // toggling the group join/exit + transaction
-  Future<bool> toggleGroupJoin(String groupId, String userName, String groupName) async {
+  Future<bool> toggleGroupJoin(String groupId, String userName, String groupName, String token) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
 
     DocumentSnapshot groupSnapshot = await groupDocumentReference.get();
     int currentMembers = groupSnapshot['nowMembers'];
     int maxMembers = groupSnapshot['maxMembers'];
+
 
     if (currentMembers < maxMembers) {
       try {
@@ -157,7 +160,7 @@ class DatabaseService {
               "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
             });
             transaction.update(groupDocumentReference, {
-              "members": FieldValue.arrayRemove(["${uid}_$userName"]),
+              "members": FieldValue.arrayRemove(["${uid}_$userName-$token"]),
               "nowMembers": FieldValue.increment(-1)
             });
           } else {
@@ -165,7 +168,7 @@ class DatabaseService {
               "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
             });
             transaction.update(groupDocumentReference, {
-              "members": FieldValue.arrayUnion(["${uid}_$userName"]),
+              "members": FieldValue.arrayUnion(["${uid}_$userName-$token"]),
               "nowMembers": FieldValue.increment(1)
             });
           }
@@ -183,17 +186,37 @@ class DatabaseService {
   }
 
   // send message
-  sendMessage(String groupId, Map<String, dynamic> chatMessageData) async {
+  sendMessage(String groupId, Map<String, dynamic> chatMessageData, String groupName, String myToken) async {
     groupCollection.doc(groupId).collection("messages").add(chatMessageData);
     groupCollection.doc(groupId).update({
       "recentMessage": chatMessageData['message'],
       "recentMessageSender": chatMessageData['sender'],
       "recentMessageTime": chatMessageData['time'].toString(),
     });
+
+    DocumentSnapshot groupSnapshot = await groupCollection.doc(groupId).get();
+    List<dynamic> members = groupSnapshot['members'];
+    List tokenList = [];
+
+    for (var member in members) {
+      String token = '';
+      token = member.substring(member.indexOf('-') + 1);
+      print(token);
+
+      if (token != myToken) { // 현재 사용자의 uid와 다를 경우에만 토큰 추가
+        tokenList.add(token);
+      }
+    }
+
+    FcmService().sendMessage(
+        tokenList: tokenList,
+        title: "New Message in $groupName",
+        body: "${chatMessageData['sender']} : ${chatMessageData['message']}",);
+
   }
 
   // Leaving a group -> 아직 오류임 수정 필요
-  Future leaveGroup(String groupId, String userName, String groupName) async {
+  Future leaveGroup(String groupId, String userName, String groupName, String token) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
 
@@ -218,7 +241,7 @@ class DatabaseService {
             "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
           });
           transaction.update(groupDocumentReference, {
-            "members": FieldValue.arrayRemove(["${uid}_$userName"]),
+            "members": FieldValue.arrayRemove(["${uid}_$userName-$token"]),
             "nowMembers": FieldValue.increment(-1)
           });
         });

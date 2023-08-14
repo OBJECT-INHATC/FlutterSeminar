@@ -52,6 +52,8 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
 
     final groupStore = Provider.of<GroupStore>(context);
+    final authStore = Provider.of<AuthStore>(context);
+
     print(groupStore.groups);
 
     return Scaffold(
@@ -218,7 +220,7 @@ class _HomePageState extends State<HomePage> {
       ,
         floatingActionButton: FloatingActionButton(
         onPressed: () {
-          popUpDialog(context, groupStore);
+          popUpDialog(context, groupStore, authStore);
         },
         elevation: 0,
         backgroundColor: Theme.of(context).primaryColor,
@@ -233,7 +235,7 @@ class _HomePageState extends State<HomePage> {
 
 
 
-  popUpDialog(BuildContext context, final groupStore) {
+  popUpDialog(BuildContext context, final groupStore, authStore) {
     showDialog(
       barrierDismissible: false,
       context: context,
@@ -284,9 +286,15 @@ class _HomePageState extends State<HomePage> {
                     DatabaseService(
                         uid: FirebaseAuth.instance.currentUser!.uid)
                         .createGroup(fullName!,
-                        FirebaseAuth.instance.currentUser!.uid, groupStore.groupName)
+                        FirebaseAuth.instance.currentUser!.uid, groupStore.groupName,
+                        await Provider.of<AuthStore>(context, listen: false).token
+
+                    )
                         .whenComplete(() {
                     });
+
+                    if(!mounted) return;
+
                     Navigator.of(context).pop();
                     showSnackbar(
                         context, Colors.green, "Group created successfully.");
