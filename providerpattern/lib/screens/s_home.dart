@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
             Consumer<AuthStore>(
               builder: (context, authStore, child) {
                 return Text(
-                  authStore.name + "(" + authStore.email + ")" ?? "", // name이 null인 경우 빈 문자열로 표시
+                  authStore.email, // name이 null인 경우 빈 문자열로 표시
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 );
