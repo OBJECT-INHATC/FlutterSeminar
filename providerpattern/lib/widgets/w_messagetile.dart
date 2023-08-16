@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// MessageTile 위젯
 class MessageTile extends StatefulWidget {
   final String message;
   final String sender;

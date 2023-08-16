@@ -7,7 +7,7 @@ import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import 'package:providerpattern/widgets/w_sncakbar.dart';
 
-
+/// 채팅방 검색 페이지
 class SearchPage extends StatefulWidget {
   SearchPage({Key? key}) : super(key: key);
 
@@ -17,6 +17,7 @@ class SearchPage extends StatefulWidget {
   State<SearchPage> createState() => _SearchPageState();
 }
 
+/// 채팅방 검색 페이지 상태 클래스
 class _SearchPageState extends State<SearchPage> {
 
   TextEditingController searchController = TextEditingController();
@@ -32,25 +33,29 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
+
+    /// 사용자 정보와 토큰 정보를 가져옴
     getCurrentUserIdandName();
     getToken();
   }
 
+  /// 현재 사용자 정보
   getCurrentUserIdandName() async {
-
     userName = await Provider.of<AuthStore>(context, listen: false).name;
     user = FirebaseAuth.instance.currentUser;
-
   }
 
+  /// 토큰 정보
   getToken() async{
     token = await Provider.of<AuthStore>(context, listen: false).token;
   }
 
+  /// 사용자 이름
   String getName(String r) {
     return r.substring(r.indexOf("_") + 1);
   }
 
+  /// 사용자 아이디
   String getId(String res) {
     return res.substring(0, res.indexOf("_"));
   }
@@ -87,6 +92,7 @@ class _SearchPageState extends State<SearchPage> {
                 ),
                 GestureDetector(
                   onTap: () {
+                    /// 검색
                     initiateSearchMethod();
                   },
                   child: Container(
@@ -105,8 +111,7 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           isLoading
-              ? Center(
-            child: CircularProgressIndicator(
+              ? Center( child: CircularProgressIndicator(
                 color: Theme.of(context).primaryColor),
           )
               : groupList(),
@@ -115,11 +120,13 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// 검색 메서드
   initiateSearchMethod() async {
     if (searchController.text.isNotEmpty) {
       setState(() {
         isLoading = true;
       });
+      /// 이름을 통해 검색
       await DatabaseService()
           .searchByName(searchController.text)
           .then((snapshot) {
@@ -133,7 +140,9 @@ class _SearchPageState extends State<SearchPage> {
     print("검색");
   }
 
+  /// 검색 결과 리스트
   groupList() {
+    /// 검색 결과가 있을 경우
     return hasUserSearched
         ? ListView.builder(
       shrinkWrap: true,
@@ -147,9 +156,11 @@ class _SearchPageState extends State<SearchPage> {
         );
       },
     )
+    /// 검색 결과가 없을 경우
         : Container();
   }
 
+  /// 그룹에 가입 되어 있는지 확인
   joinedOrNot(
       String userName, String groupId, String groupname, String admin) async {
     await DatabaseService(uid: user!.uid)
@@ -161,9 +172,10 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
+  /// 그룹 타일 위젯
   Widget groupTile(
       String userName, String groupId, String groupName, String admin) {
-    // function to check whether user already exists in group
+    /// 그룹에 가입 되어 있는지 확인
     joinedOrNot(userName, groupId, groupName, admin);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -180,27 +192,23 @@ class _SearchPageState extends State<SearchPage> {
       subtitle: Text("Admin: ${getName(admin)}"),
       trailing: InkWell(
         onTap: () async {
+          /// 가입 또는 탈퇴 메서드 호출
           bool success = await DatabaseService(uid: user!.uid)
               .toggleGroupJoin(groupId, userName, groupName,token);
 
           setState(() {
             if (success) {
+              /// 가입 성공
               isJoined = !isJoined;
               showSnackbar(context, isJoined ? Colors.green : Colors.red,
                   isJoined ? "Successfully joined the group" : "Left the group $groupName");
             } else {
+              /// 인원이 가득 찼을 경우 가입 실패
               showSnackbar(context, Colors.red, "Group is full, cannot join.");
             }
           });
-            // Future.delayed(const Duration(seconds: 2), () {
-            //   nextScreen(
-            //       context,
-            //       ChatPage(
-            //           groupId: groupId,
-            //           groupName: groupName,
-            //           userName: userName));
-            // });
         },
+        /// 가입이 되어 있을 경우
         child: isJoined
             ? Container(
           decoration: BoxDecoration(
@@ -215,6 +223,7 @@ class _SearchPageState extends State<SearchPage> {
             style: TextStyle(color: Colors.white),
           ),
         )
+        /// 가입이 되어 있지 않을 경우
             : Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),

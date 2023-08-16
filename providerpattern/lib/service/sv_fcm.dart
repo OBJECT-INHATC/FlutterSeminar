@@ -3,20 +3,22 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+/// FCM Service Class
 class FcmService {
 
+  /// FCM 서버 키 -> .env 파일에 저장
   final String _serverKey = dotenv.env['FCM_SERVER_KEY'] ?? "";
 
+  /// 알림 전송 메서드
   Future<void> sendMessage({
     required List tokenList,
     required String title,
     required String body,
   }) async {
 
-    print(_serverKey);
     http.Response response;
-    print("호출됨");
 
+    /// 알림 권한 요청
     NotificationSettings settings =
     await FirebaseMessaging.instance.requestPermission(
       alert: true,
@@ -28,6 +30,7 @@ class FcmService {
       sound: false,
     );
 
+    /// 알림 권한 상태 확인
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
     } else if (settings.authorizationStatus ==
@@ -37,11 +40,8 @@ class FcmService {
       print('User declined or has not accepted permission');
     }
 
-    for (var token in tokenList) {
-      print(token);
-    }
-
     try {
+      /// FCM 서버에 알림 전송
       response = await http.post(
           Uri.parse('https://fcm.googleapis.com/fcm/send'),
           headers: <String, String>{
@@ -62,7 +62,6 @@ class FcmService {
             //'to': userToken
              'registration_ids': tokenList
           }));
-      print("호출됨2");
     } catch (e) {
       print('error $e');
     }

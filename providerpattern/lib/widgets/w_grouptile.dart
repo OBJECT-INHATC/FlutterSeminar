@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:providerpattern/screens/s_chat.dart';
 
+/// GroupTile 위젯
 class GroupTile extends StatefulWidget {
   final String userName;
   final String groupId;

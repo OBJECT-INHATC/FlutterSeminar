@@ -7,13 +7,14 @@ import 'package:providerpattern/service/sv_database.dart';
 import 'package:providerpattern/service/sv_fcm.dart';
 import 'package:providerpattern/widgets/w_messagetile.dart';
 
-
+/// 채팅 화면
 class ChatPage extends StatefulWidget {
 
   final String groupId;
   final String groupName;
   final String userName;
 
+  /// 생성자
   const ChatPage(
       {Key? key,
         required this.groupId,
@@ -25,21 +26,28 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
+/// 채팅 화면 상태 관리 클래스
 class _ChatPageState extends State<ChatPage> {
 
+  /// 채팅 메시지 스트림
   Stream<QuerySnapshot>? chats;
+
+  /// 메시지 입력 컨트롤러
   TextEditingController messageController = TextEditingController();
+
+  /// 관리자 이름, 토큰, 사용자 Auth 정보
   String admin = "";
   String token = "";
   User? user;
 
   @override
   void initState() {
-    getChatandAdmin(); // get the chat messages
-    getCurrentUserandToken(); // get the current user
+    getChatandAdmin(); /// 채팅 메시지 스트림, 관리자 이름 호출
+    getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
     super.initState();
   }
 
+  /// 채팅 메시지 스트림, 관리자 이름 호출 메서드
   getChatandAdmin(){
     DatabaseService().getChats(widget.groupId).then((val) {
       setState(() {
@@ -53,6 +61,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  /// 토큰, 사용자 Auth 정보 호출 메서드
   getCurrentUserandToken() async {
     user = FirebaseAuth.instance.currentUser;
     token = await Provider.of<AuthStore>(context, listen: false).token;
@@ -88,6 +97,7 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                       ),
                       IconButton(
+                        /// 그룹 탈퇴
                         onPressed: () async {
                           await DatabaseService(uid: user!.uid).leaveGroup(
                               widget.groupId,widget.userName, widget.groupName, token);
@@ -111,7 +121,7 @@ class _ChatPageState extends State<ChatPage> {
       body: Stack(
         children: <Widget>[
 
-          /// 챗 메시지
+          /// 채팅 메시지 스트림
           chatMessages(),
           Container(
             alignment: Alignment.bottomCenter,
@@ -160,7 +170,9 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// 채팅 메시지 스트림
   chatMessages() {
+    /// 스트림 빌더를 통해 채팅 메시지 스트림 화면에 표시
     return StreamBuilder(
       stream: chats,
       builder: (context, AsyncSnapshot snapshot) {
@@ -168,6 +180,7 @@ class _ChatPageState extends State<ChatPage> {
             ? ListView.builder(
           itemCount: snapshot.data.docs.length,
           itemBuilder: (context, index) {
+            /// 메시지 타일 위젯
             return MessageTile(
                 message: snapshot.data.docs[index]['message'],
                 sender: snapshot.data.docs[index]['sender'],
@@ -179,16 +192,20 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  /// 메시지 전송 메서드
   sendMessage() {
     if (messageController.text.isNotEmpty) {
+      /// 전달할 메시지 Map 생성
       Map<String, dynamic> chatMessageMap = {
         "message": messageController.text,
         "sender": widget.userName,
         "time": DateTime.now().millisecondsSinceEpoch,
       };
 
+      /// 메시지 전송
       DatabaseService().sendMessage(widget.groupId, chatMessageMap, widget.groupName, token);
       setState(() {
+        /// 메시지 입력 컨트롤러 초기화
         messageController.clear();
       });
     }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import '/service/sv_auth.dart';
 
+/// 회원 가입 페이지
 class RegisterPage extends StatelessWidget{
 
   RegisterPage({super.key});
@@ -14,6 +15,7 @@ class RegisterPage extends StatelessWidget{
   @override
   Widget build(BuildContext context) {
 
+    /// AuthStore Provider Container 생성
     final authStore = Provider.of<AuthStore>(context);
 
     return Scaffold(
@@ -193,13 +195,14 @@ class RegisterPage extends StatelessWidget{
                       )
                   ),
                   onPressed: () {
-                    // sv_auth의 register 함수를 호출하여 회원가입을 시도합니다.
+                    /// 회원 가입 메서드 호출
                     AuthService().registerUserWithEmailandPassword(
                         authStore.name,
                         authStore.email,
                         authStore.password,
                         authStore.token
                     ).then((value) async {
+                      /// 회원 가입 성공 시 로그인 페이지로 이동
                       if (value == true) {
                         Navigator.pop(context);
                       }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// showSnackbar 함수
 void showSnackbar(context, color, message) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
@@ -11,7 +12,9 @@ void showSnackbar(context, color, message) {
       duration: const Duration(seconds: 2),
       action: SnackBarAction(
         label: "OK",
-        onPressed: () {},
+        onPressed: () {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        },
         textColor: Colors.white,
       ),
     ),

@@ -115,6 +115,7 @@ class _MyAppState extends State<MyApp> {
 
   void getMyDeviceToken() async {
     var token = await FirebaseMessaging.instance.getToken();
+    print(token);
 
     if(!mounted) return;
 

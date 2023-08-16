@@ -7,37 +7,18 @@ import 'package:providerpattern/service/sv_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import '../providers/p_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
-import '/screens/s_main.dart';
 import '/screens/s_register.dart';
 
 /// 로그인 페이지
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   LoginPage({super.key});
 
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
   final storage = FlutterSecureStorage();
-
-  _asyncMethod() async {
-    if (await storage.read(key: "email") != null && await storage.read(key: "fullName") != null) {
-      if(!mounted) return;
-      Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // _asyncMethod();
-  }
 
   @override
   Widget build(BuildContext context) {
 
+    /// AuthStore Provider Container 생성
     final authStore = Provider.of<AuthStore>(context);
 
     return Scaffold(
@@ -93,19 +74,27 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: const Text('Log In'),
                     onPressed: () async {
+                      /// 로그인
                       AuthService().loginWithUserNameandPassword(
                           authStore.email,
                           authStore.password
                       ).then((value) async {
                         if(value == true){
+
+                          /// 이메일 이용 -> 사용자 정보 획득
                           QuerySnapshot snapshot =
                           await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
                               .gettingUserData(authStore.email);
-                          authStore.login(snapshot.docs[0]['fullName'], snapshot.docs[0]['email']);
+
+                          /// 로컬에 이름, 이메일 저장
                           await storage.write(key: "email", value: snapshot.docs[0]['email']);
                           await storage.write(key: "fullName", value: snapshot.docs[0]['fullName']);
-                          if (!mounted) return;
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+
+                          /// 홈 화면으로 이동
+                          if (context.mounted){
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
+                          }
+
                         }
                         else{
                           ScaffoldMessenger.of(context).showSnackBar(

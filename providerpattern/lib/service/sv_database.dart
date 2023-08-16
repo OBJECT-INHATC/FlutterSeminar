@@ -2,20 +2,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:providerpattern/service/sv_fcm.dart';
 
+/// DatabaseService class - Firebase Firestore Database 관련 함수들을 모아놓은 클래스
 class DatabaseService {
+
+  /// uid - 현재 사용자의 uid
   final String? uid;
+
+  /// 생성자
   DatabaseService({this.uid});
 
-  // reference for our collections
+  /// CollectionReference - User Collection
   final CollectionReference userCollection =
   FirebaseFirestore.instance.collection("users");
 
+  /// CollectionReference - Group Collection
   final CollectionReference groupCollection =
   FirebaseFirestore.instance.collection("groups");
 
+  /// 현재 사용자의 User 정보를 가져오는 함수
   final User? user = FirebaseAuth.instance.currentUser;
 
-  // saving the userdata
+  /// 유저 정보 Firebase 저장
   Future savingUserData(String fullName, String email, String fcmToken) async {
     return await userCollection.doc(uid).set({
       "fullName": fullName,
@@ -27,19 +34,19 @@ class DatabaseService {
     });
   }
 
-  // getting user data
+  /// 유저 정보 가져오는 메서드
   Future gettingUserData(String email) async {
     QuerySnapshot snapshot =
     await userCollection.where("email", isEqualTo: email).get();
     return snapshot;
   }
 
-  // get user groups
+  /// 사용자 그룹 정보 가져오는 메서드
   getUserGroups() async {
     return userCollection.doc(uid).snapshots();
   }
 
-  // creating a group
+  /// 그룹 정보 Firebase 저장
   Future createGroup(String userName, String id, String groupName, String token) async {
     DocumentReference groupDocumentReference = await groupCollection.add({
       "groupName": groupName,
@@ -52,12 +59,14 @@ class DatabaseService {
       "recentMessage": "",
       "recentMessageSender": "",
     });
-    // update the members
+
+    /// 그룹 생성 후 그룹 멤버 추가
     await groupDocumentReference.update({
       "members": FieldValue.arrayUnion(["${uid}_$userName-$token"]),
       "groupId": groupDocumentReference.id,
     });
 
+    /// 그룹 생성 후 사용자 정보에 그룹 정보 추가
     DocumentReference userDocumentReference = userCollection.doc(uid);
     return await userDocumentReference.update({
       "groups":
@@ -65,7 +74,7 @@ class DatabaseService {
     });
   }
 
-  // getting the chats
+  /// 채팅 내용 획득 메서드
   getChats(String groupId) async {
     return groupCollection
         .doc(groupId)
@@ -74,23 +83,24 @@ class DatabaseService {
         .snapshots();
   }
 
+  /// 그룹의 어드민 정보 획득 메서드
   Future getGroupAdmin(String groupId) async {
     DocumentReference d = groupCollection.doc(groupId);
     DocumentSnapshot documentSnapshot = await d.get();
     return documentSnapshot['admin'];
   }
 
-  // get group members
+  /// 그룹의 멤버 획득 메서드
   getGroupMembers(groupId) async {
     return groupCollection.doc(groupId).snapshots();
   }
 
-  // search
+  /// 그룹 검색 메서드
   searchByName(String groupName) {
     return groupCollection.where("groupName", isEqualTo: groupName).get();
   }
 
-  // function -> bool
+  /// 사용자가 그룹에 가입 되어 있는지 확인하는 메서드
   Future<bool> isUserJoined(
       String groupName, String groupId, String userName) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
@@ -104,42 +114,7 @@ class DatabaseService {
     }
   }
 
-
-  // // toggling the group join/exit
-  // Future toggleGroupJoin(
-  //     String groupId, String userName, String groupName) async {
-  //   // doc reference
-  //   DocumentReference userDocumentReference = userCollection.doc(uid);
-  //   DocumentReference groupDocumentReference = groupCollection.doc(groupId);
-  //
-  //   DocumentSnapshot documentSnapshot = await userDocumentReference.get();
-  //   List<dynamic> groups = await documentSnapshot['groups'];
-  //
-  //   // if user has our groups -> then remove then or also in other part re join
-  //   if (groups.contains("${groupId}_$groupName")) {
-  //     await userDocumentReference.update({
-  //       "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
-  //     });
-  //     await groupDocumentReference.update({
-  //       "members": FieldValue.arrayRemove(["${uid}_$userName"])
-  //     });
-  //     await groupDocumentReference.update({
-  //       "nowMembers": FieldValue.increment(-1)
-  //     });
-  //   } else {
-  //     await userDocumentReference.update({
-  //       "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
-  //     });
-  //     await groupDocumentReference.update({
-  //       "members": FieldValue.arrayUnion(["${uid}_$userName"])
-  //     });
-  //     await groupDocumentReference.update({
-  //       "nowMembers": FieldValue.increment(1)
-  //     });
-  //   }
-  // }
-
-  // toggling the group join/exit + transaction
+  /// 그룹 가입/탈퇴 메서드 - Transaction 사용
   Future<bool> toggleGroupJoin(String groupId, String userName, String groupName, String token) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
@@ -185,7 +160,7 @@ class DatabaseService {
     }
   }
 
-  // send message
+  /// 메시지 전송 + FCM 알림 전송 메서드
   sendMessage(String groupId, Map<String, dynamic> chatMessageData, String groupName, String myToken) async {
     groupCollection.doc(groupId).collection("messages").add(chatMessageData);
     groupCollection.doc(groupId).update({
@@ -197,15 +172,18 @@ class DatabaseService {
     DocumentSnapshot groupSnapshot = await groupCollection.doc(groupId).get();
     List<dynamic> members = groupSnapshot['members'];
     List tokenList = [];
+    String token = '';
 
     for (var member in members) {
-      String token = '';
       token = member.substring(member.indexOf('-') + 1);
-      print(token);
-
-      if (token != myToken) { // 현재 사용자의 uid와 다를 경우에만 토큰 추가
+      if (token != myToken) {
         tokenList.add(token);
       }
+      token = '';
+    }
+
+    for(var token in tokenList) {
+      print(token);
     }
 
     FcmService().sendMessage(
@@ -215,7 +193,7 @@ class DatabaseService {
 
   }
 
-  // Leaving a group -> 아직 오류임 수정 필요
+  /// 그룹 탈퇴 메서드
   Future leaveGroup(String groupId, String userName, String groupName, String token) async {
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
