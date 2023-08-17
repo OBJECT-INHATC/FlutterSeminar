@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
-import 'package:providerpattern/service/sv_fcm.dart';
 import 'package:providerpattern/widgets/w_messagetile.dart';
 
 /// 채팅 화면
@@ -35,6 +34,9 @@ class _ChatPageState extends State<ChatPage> {
   /// 메시지 입력 컨트롤러
   TextEditingController messageController = TextEditingController();
 
+  /// 스크롤 컨트롤러
+  late ScrollController _scrollController;
+
   /// 관리자 이름, 토큰, 사용자 Auth 정보
   String admin = "";
   String token = "";
@@ -44,7 +46,9 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     getChatandAdmin(); /// 채팅 메시지 스트림, 관리자 이름 호출
     getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
+    _scrollController = ScrollController(); /// 스크롤 컨트롤러 초기화
     super.initState();
+
   }
 
   /// 채팅 메시지 스트림, 관리자 이름 호출 메서드
@@ -69,6 +73,13 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context){
+
+    if(_scrollController.hasClients) {
+      WidgetsBinding.instance!.addPostFrameCallback((_) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -178,6 +189,7 @@ class _ChatPageState extends State<ChatPage> {
       builder: (context, AsyncSnapshot snapshot) {
         return snapshot.hasData
             ? ListView.builder(
+          controller: _scrollController,
           itemCount: snapshot.data.docs.length,
           itemBuilder: (context, index) {
             /// 메시지 타일 위젯
