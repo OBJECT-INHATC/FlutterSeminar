@@ -1,10 +1,16 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:providerpattern/database/d_chat_dao.dart';
+import 'package:providerpattern/models/m_chat.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/service/sv_database.dart';
 import 'package:providerpattern/widgets/w_messagetile.dart';
+
 
 /// 채팅 화면
 class ChatPage extends StatefulWidget {
@@ -31,11 +37,17 @@ class _ChatPageState extends State<ChatPage> {
   /// 채팅 메시지 스트림
   Stream<QuerySnapshot>? chats;
 
+  /// 로컬 채팅 메시지 스트림
+  List<ChatMessage>? localChats;
+
   /// 메시지 입력 컨트롤러
   TextEditingController messageController = TextEditingController();
 
   /// 스크롤 컨트롤러
   late ScrollController _scrollController;
+
+  /// 로컬 저장소 SS
+  final storage = const FlutterSecureStorage();
 
   /// 관리자 이름, 토큰, 사용자 Auth 정보
   String admin = "";
@@ -46,24 +58,40 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     getChatandAdmin(); /// 채팅 메시지 스트림, 관리자 이름 호출
     getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
+    getLocalChat(); /// 로컬 저장소에서 채팅 내용 불러오기
+
+    // setChat(); /// 로컬 저장소에서 채팅 내용 불러오기
+
     _scrollController = ScrollController(); /// 스크롤 컨트롤러 초기화
     super.initState();
 
   }
 
+  getLocalChat() async{
+
+    var localM =  await ChatDao().getChatbyGroupIdSortedByTime(widget.groupId);
+
+    setState(() {
+      localChats = localM;
+    });
+
+  }
+
   /// 채팅 메시지 스트림, 관리자 이름 호출 메서드
   getChatandAdmin(){
-    DatabaseService().getChats(widget.groupId).then((val) {
+    DatabaseService().getChatsAfterJoin(widget.groupId).then((val) {
       setState(() {
         chats = val;
       });
     });
+
     DatabaseService().getGroupAdmin(widget.groupId).then((val) {
       setState(() {
         admin = val;
       });
     });
   }
+
 
   /// 토큰, 사용자 Auth 정보 호출 메서드
   getCurrentUserandToken() async {
@@ -183,28 +211,50 @@ class _ChatPageState extends State<ChatPage> {
 
   /// 채팅 메시지 스트림
   chatMessages() {
-    /// 스트림 빌더를 통해 채팅 메시지 스트림 화면에 표시
     return StreamBuilder(
       stream: chats,
-      builder: (context, AsyncSnapshot snapshot) {
-        return snapshot.hasData
-            ? ListView.builder(
-          controller: _scrollController,
-          itemCount: snapshot.data.docs.length,
-          itemBuilder: (context, index) {
-            /// 메시지 타일 위젯
-            return MessageTile(
-                message: snapshot.data.docs[index]['message'],
-                sender: snapshot.data.docs[index]['sender'],
-                sentByMe: widget.userName == snapshot.data.docs[index]['sender']);
-          },
-        )
-            : Container();
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasError) return const Text("Something went wrong");
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        if (snapshot.hasData) {
+          List<ChatMessage> fireStoreChats = snapshot.data!.docs
+              .map<ChatMessage>((e) => ChatMessage.fromMap(e.data() as Map<String, dynamic>))
+              .toList();
+
+          print(fireStoreChats.length);
+          if(localChats != null) {
+            fireStoreChats.addAll(localChats!);
+          }
+          print(fireStoreChats.length);
+
+          fireStoreChats.sort((a, b) => a.time.compareTo(b.time));
+
+          return ListView.builder(
+            controller: _scrollController,
+            itemCount: fireStoreChats.length,
+            itemBuilder: (context, index) {
+              return MessageTile(
+                message: fireStoreChats[index].message,
+                sender: fireStoreChats[index].sender,
+                sentByMe: widget.userName == fireStoreChats[index].sender,
+              );
+            },
+          );
+        } else {
+          return Container();
+        }
       },
     );
   }
 
-  /// 메시지 전송 메서드
+
+  /// 메시지 전송 메서드 - 메시지 전달 및 로컬 저장소 메시지 저장
   sendMessage() {
     if (messageController.text.isNotEmpty) {
       /// 전달할 메시지 Map 생성
@@ -214,8 +264,16 @@ class _ChatPageState extends State<ChatPage> {
         "time": DateTime.now().millisecondsSinceEpoch,
       };
 
+      /// 로컬 저장소에 메시지 저장
+      ChatDao().insert(ChatMessage.withId(
+        groupId: widget.groupId,
+        message: messageController.text,
+        sender: widget.userName,
+        time: DateTime.now().millisecondsSinceEpoch,));
+
       /// 메시지 전송
       DatabaseService().sendMessage(widget.groupId, chatMessageMap, widget.groupName, token);
+
       setState(() {
         /// 메시지 입력 컨트롤러 초기화
         messageController.clear();

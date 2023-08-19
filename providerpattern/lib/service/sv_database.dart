@@ -74,7 +74,17 @@ class DatabaseService {
     });
   }
 
-  /// 채팅 내용 획득 메서드
+  /// 입장 후 채팅 메시지 스트림 획득 메서드
+  getChatsAfterJoin(String groupId) async {
+    return groupCollection
+        .doc(groupId)
+        .collection("messages")
+        .orderBy("time")
+        .startAfter([DateTime.now().millisecondsSinceEpoch])
+        .snapshots();
+  }
+
+  /// 채팅 메시지 스트림 메서드
   getChats(String groupId) async {
     return groupCollection
         .doc(groupId)

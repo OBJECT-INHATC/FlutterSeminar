@@ -1,7 +1,10 @@
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
+import 'package:providerpattern/database/d_chat_dao.dart';
+import 'package:providerpattern/models/m_chat.dart';
 import 'package:providerpattern/providers/p_auth.dart';
 import 'package:providerpattern/providers/p_group.dart';
 import 'package:providerpattern/screens/s_login.dart';
@@ -38,6 +41,39 @@ class _HomePageState extends State<HomePage> {
     fullName = await storage.read(key: 'fullName');
 
   }
+
+  // makeLocalChat() async {
+  //
+  //   await ChatDao().deleteAll();
+  //
+  //   final data = ChatMessage.withId(
+  //     groupId: 'N5GaoJuLTladxwpKcpGi',
+  //     message: '테스트1 입니다',
+  //     sender: '테스트1 압니다',
+  //     time: 1692349381855,
+  //   );
+  //
+  //   final data2 = ChatMessage.withId(
+  //     groupId: 'N5GaoJuLTladxwpKcpGi',
+  //     message: '테스트2 입니다',
+  //     sender: '테스트2 압니다',
+  //     time: 1692349381900,
+  //   );
+  //
+  //   final data3 = ChatMessage.withId(
+  //     groupId: 'N5GaoJuLTladxwpKcpGi',
+  //     message: '테스트3 입니다',
+  //     sender: '테스트3 압니다',
+  //     time: 1692349381902,
+  //   );
+  //
+  //   ChatDao().insert(data);
+  //   ChatDao().insert(data2);
+  //   ChatDao().insert(data3);
+  //
+  //   print("inserted");
+  //
+  // }
 
   // string manipulation
   String getId(String res) {
