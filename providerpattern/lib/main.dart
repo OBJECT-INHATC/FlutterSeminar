@@ -58,8 +58,6 @@ void initializeNotification() async {
     RemoteNotification? notification = message.notification;
 
     if (notification != null) {
-
-      /// 알림을 받았을 때 실행되는 부분
       flutterLocalNotificationsPlugin.show(
           notification.hashCode,
           notification.title,
@@ -72,7 +70,6 @@ void initializeNotification() async {
             ),
           ),
           payload: message.data['test_paremeter1']);
-      print("수신자 측 메시지 수신");
     }
   });
 

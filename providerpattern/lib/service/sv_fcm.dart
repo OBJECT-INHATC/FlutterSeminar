@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:providerpattern/models/m_chat.dart';
 
 /// FCM Service Class
 class FcmService {
@@ -14,6 +15,7 @@ class FcmService {
     required List tokenList,
     required String title,
     required String body,
+    required ChatMessage chatMessage,
   }) async {
 
     http.Response response;
@@ -57,6 +59,10 @@ class FcmService {
               'id': '1',
               'status': 'done',
               "action": '테스트',
+              'groupId': chatMessage.groupId,
+              'message': chatMessage.message,
+              'sender': chatMessage.sender,
+              'time': chatMessage.time.toString() ,
             },
             // 상대방 토큰 값, to -> 단일, registration_ids -> 여러명
             //'to': userToken

@@ -56,34 +56,39 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void initState() {
-    getChatandAdmin(); /// 채팅 메시지 스트림, 관리자 이름 호출
-    getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
-    getLocalChat(); /// 로컬 저장소에서 채팅 내용 불러오기
 
-    // setChat(); /// 로컬 저장소에서 채팅 내용 불러오기
+    getChatandAdmin(); /// 로컬 채팅 메시지, 채팅 메시지 스트림, 관리자 이름 호출
+    getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
 
     _scrollController = ScrollController(); /// 스크롤 컨트롤러 초기화
     super.initState();
 
   }
 
-  getLocalChat() async{
+  /// 로컬 채팅 메시지 , 채팅 메시지 스트림, 관리자 이름 호출 메서드
+  getChatandAdmin() async{
 
-    var localM =  await ChatDao().getChatbyGroupIdSortedByTime(widget.groupId);
-
-    setState(() {
-      localChats = localM;
-    });
-
-  }
-
-  /// 채팅 메시지 스트림, 관리자 이름 호출 메서드
-  getChatandAdmin(){
-    DatabaseService().getChatsAfterJoin(widget.groupId).then((val) {
+    var loalChat = await ChatDao().getChatbyGroupIdSortedByTime(widget.groupId).then((val) {
       setState(() {
-        chats = val;
+        localChats = val;
       });
     });
+
+    if (loalChat != null && loalChat.isNotEmpty) {
+      final lastLocalChat = loalChat[loalChat.length - 1];
+
+      DatabaseService().getChatsAfterSpecTime(widget.groupId, lastLocalChat.time).then((val) {
+        setState(() {
+          chats = val;
+        });
+      });
+    } else {
+      DatabaseService().getChats(widget.groupId).then((val) {
+        setState(() {
+          chats = val;
+        });
+      });
+    }
 
     DatabaseService().getGroupAdmin(widget.groupId).then((val) {
       setState(() {
@@ -102,6 +107,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context){
 
+    /// 스크롤 컨트롤러 생성 + 하단 이동
     if(_scrollController.hasClients) {
       WidgetsBinding.instance!.addPostFrameCallback((_) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
@@ -227,7 +233,15 @@ class _ChatPageState extends State<ChatPage> {
               .map<ChatMessage>((e) => ChatMessage.fromMap(e.data() as Map<String, dynamic>))
               .toList();
 
+          /// 로컬 디비에 없는 메시지만 저장
+          if (fireStoreChats.isNotEmpty) {
+            for (var newChatMessage in fireStoreChats) {
+              ChatDao().insert(newChatMessage);
+            }
+          }
+
           print(fireStoreChats.length);
+
           if(localChats != null) {
             fireStoreChats.addAll(localChats!);
           }
@@ -236,6 +250,7 @@ class _ChatPageState extends State<ChatPage> {
           fireStoreChats.sort((a, b) => a.time.compareTo(b.time));
 
           return ListView.builder(
+            padding: EdgeInsets.only(bottom: 100),
             controller: _scrollController,
             itemCount: fireStoreChats.length,
             itemBuilder: (context, index) {
@@ -264,15 +279,15 @@ class _ChatPageState extends State<ChatPage> {
         "time": DateTime.now().millisecondsSinceEpoch,
       };
 
-      /// 로컬 저장소에 메시지 저장
-      ChatDao().insert(ChatMessage.withId(
-        groupId: widget.groupId,
-        message: messageController.text,
-        sender: widget.userName,
-        time: DateTime.now().millisecondsSinceEpoch,));
-
       /// 메시지 전송
       DatabaseService().sendMessage(widget.groupId, chatMessageMap, widget.groupName, token);
+
+      /// 스크롤 화면 하단으로 이동
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
 
       setState(() {
         /// 메시지 입력 컨트롤러 초기화

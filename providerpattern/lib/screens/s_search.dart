@@ -28,7 +28,6 @@ class _SearchPageState extends State<SearchPage> {
   bool hasUserSearched = false;
   bool isLoading = false;
   bool isJoined = false;
-  User? user;
 
   @override
   void initState() {
@@ -42,7 +41,6 @@ class _SearchPageState extends State<SearchPage> {
   /// 현재 사용자 정보
   getCurrentUserIdandName() async {
     userName = await Provider.of<AuthStore>(context, listen: false).name;
-    user = FirebaseAuth.instance.currentUser;
   }
 
   /// 토큰 정보
@@ -163,7 +161,7 @@ class _SearchPageState extends State<SearchPage> {
   /// 그룹에 가입 되어 있는지 확인
   joinedOrNot(
       String userName, String groupId, String groupname, String admin) async {
-    await DatabaseService(uid: user!.uid)
+    await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
         .isUserJoined(groupname, groupId, userName)
         .then((value) {
       setState(() {
@@ -193,8 +191,8 @@ class _SearchPageState extends State<SearchPage> {
       trailing: InkWell(
         onTap: () async {
           /// 가입 또는 탈퇴 메서드 호출
-          bool success = await DatabaseService(uid: user!.uid)
-              .toggleGroupJoin(groupId, userName, groupName,token);
+          bool success = await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
+              .toggleGroupJoin(groupId, userName, groupName, token);
 
           setState(() {
             if (success) {

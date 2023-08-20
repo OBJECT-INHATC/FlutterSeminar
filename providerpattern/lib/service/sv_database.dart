@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:providerpattern/models/m_chat.dart';
 import 'package:providerpattern/service/sv_fcm.dart';
 
 /// DatabaseService class - Firebase Firestore Database 관련 함수들을 모아놓은 클래스
@@ -81,6 +82,15 @@ class DatabaseService {
         .collection("messages")
         .orderBy("time")
         .startAfter([DateTime.now().millisecondsSinceEpoch])
+        .snapshots();
+  }
+
+  getChatsAfterSpecTime(String groupId, int time) async {
+    return groupCollection
+        .doc(groupId)
+        .collection("messages")
+        .orderBy("time")
+        .startAfter([time])
         .snapshots();
   }
 
@@ -199,7 +209,14 @@ class DatabaseService {
     FcmService().sendMessage(
         tokenList: tokenList,
         title: "New Message in $groupName",
-        body: "${chatMessageData['sender']} : ${chatMessageData['message']}",);
+        body: "${chatMessageData['sender']} : ${chatMessageData['message']}",
+        chatMessage: ChatMessage.withId(
+          groupId: groupId,
+          message: chatMessageData['message'],
+          sender: chatMessageData['sender'],
+          time: chatMessageData['time'],
+        )
+    );
 
   }
 
