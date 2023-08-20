@@ -146,6 +146,9 @@ class _ChatPageState extends State<ChatPage> {
                         onPressed: () async {
                           await DatabaseService(uid: user!.uid).leaveGroup(
                               widget.groupId,widget.userName, widget.groupName, token);
+
+                          ChatDao().deleteByGroupId(widget.groupId);
+
                           if(!mounted) return;
                           Navigator.pop(context);
                           Navigator.pop(context);

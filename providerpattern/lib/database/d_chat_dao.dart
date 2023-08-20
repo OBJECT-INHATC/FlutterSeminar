@@ -27,6 +27,11 @@ class ChatDao {
     await _chatFolder.delete(await _db);
   }
 
+  Future deleteByGroupId(String groupId) async {
+    final finder = Finder(filter: Filter.equals('groupId', groupId));
+    await _chatFolder.delete(await _db, finder: finder);
+  }
+
   Future<List<ChatMessage>> getChatbyGroupIdSortedByTime(String groupId) async {
     final finder = Finder(filter: Filter.equals('groupId', groupId), sortOrders: [SortOrder('time')]);
 
