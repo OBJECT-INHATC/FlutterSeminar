@@ -65,19 +65,27 @@ class _ChatPageState extends State<ChatPage> {
 
   }
 
-  /// 로컬 채팅 메시지 , 채팅 메시지 스트림, 관리자 이름 호출 메서드
-  getChatandAdmin() async{
+  getLocalChat() async {
 
-    var loalChat = await ChatDao().getChatbyGroupIdSortedByTime(widget.groupId).then((val) {
+    print(widget.groupId);
+
+    await ChatDao().getChatbyGroupIdSortedByTime(widget.groupId).then((val) {
       setState(() {
         localChats = val;
       });
     });
+  }
 
-    if (loalChat != null && loalChat.isNotEmpty) {
-      final lastLocalChat = loalChat[loalChat.length - 1];
+  /// 로컬 채팅 메시지 , 채팅 메시지 스트림, 관리자 이름 호출 메서드
+  getChatandAdmin() async{
 
-      DatabaseService().getChatsAfterSpecTime(widget.groupId, lastLocalChat.time).then((val) {
+    await getLocalChat();
+    print(localChats!.length);
+
+    if (localChats != null && localChats!.isNotEmpty) {
+      final lastLocalChat = localChats?[localChats!.length - 1];
+
+      DatabaseService().getChatsAfterSpecTime(widget.groupId, lastLocalChat!.time).then((val) {
         setState(() {
           chats = val;
         });
@@ -232,23 +240,25 @@ class _ChatPageState extends State<ChatPage> {
         }
 
         if (snapshot.hasData) {
+
           List<ChatMessage> fireStoreChats = snapshot.data!.docs
-              .map<ChatMessage>((e) => ChatMessage.fromMap(e.data() as Map<String, dynamic>))
+              .map<ChatMessage>((e) => ChatMessage.fromMap(e.data() as Map<String, dynamic>, widget.groupId))
               .toList();
 
           /// 로컬 디비에 없는 메시지만 저장
           if (fireStoreChats.isNotEmpty) {
-            for (var newChatMessage in fireStoreChats) {
-              ChatDao().insert(newChatMessage);
-            }
-          }
 
-          print(fireStoreChats.length);
+            // 메시지가 도착했을때 화면 스크롤 최하단으로 고정
+            WidgetsBinding.instance!.addPostFrameCallback((_) {
+              _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+            });
+
+            ChatDao().saveChatMessages(fireStoreChats);
+          }
 
           if(localChats != null) {
             fireStoreChats.addAll(localChats!);
           }
-          print(fireStoreChats.length);
 
           fireStoreChats.sort((a, b) => a.time.compareTo(b.time));
 

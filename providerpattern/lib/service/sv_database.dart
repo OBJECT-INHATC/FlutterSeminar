@@ -210,7 +210,7 @@ class DatabaseService {
         tokenList: tokenList,
         title: "New Message in $groupName",
         body: "${chatMessageData['sender']} : ${chatMessageData['message']}",
-        chatMessage: ChatMessage.withId(
+        chatMessage: ChatMessage(
           groupId: groupId,
           message: chatMessageData['message'],
           sender: chatMessageData['sender'],
