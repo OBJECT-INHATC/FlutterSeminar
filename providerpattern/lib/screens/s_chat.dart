@@ -54,14 +54,16 @@ class _ChatPageState extends State<ChatPage> {
   String token = "";
   User? user;
 
+  int previousItemCount = 0;
+
   @override
   void initState() {
 
     getChatandAdmin(); /// 로컬 채팅 메시지, 채팅 메시지 스트림, 관리자 이름 호출
     getCurrentUserandToken(); /// 토큰, 사용자 Auth 정보 호출
 
-    _scrollController = ScrollController(); /// 스크롤 컨트롤러 초기화
     super.initState();
+    _scrollController = ScrollController(); /// 스크롤 컨트롤러 초기화
 
   }
 
@@ -245,14 +247,16 @@ class _ChatPageState extends State<ChatPage> {
               .map<ChatMessage>((e) => ChatMessage.fromMap(e.data() as Map<String, dynamic>, widget.groupId))
               .toList();
 
-          /// 로컬 디비에 없는 메시지만 저장
-          if (fireStoreChats.isNotEmpty) {
-
-            // 메시지가 도착했을때 화면 스크롤 최하단으로 고정
-            WidgetsBinding.instance!.addPostFrameCallback((_) {
+          // itemCount가 변경되었을 때 스크롤 위치를 조정
+          if (fireStoreChats.length > previousItemCount) {
+            previousItemCount = fireStoreChats.length;
+            WidgetsBinding.instance?.addPostFrameCallback((_) {
               _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
             });
+          }
 
+          /// 로컬 디비에 없는 메시지만 저장
+          if (fireStoreChats.isNotEmpty) {
             ChatDao().saveChatMessages(fireStoreChats);
           }
 
@@ -263,7 +267,7 @@ class _ChatPageState extends State<ChatPage> {
           fireStoreChats.sort((a, b) => a.time.compareTo(b.time));
 
           return ListView.builder(
-            padding: EdgeInsets.only(bottom: 100),
+            padding: EdgeInsets.only(bottom: 150),
             controller: _scrollController,
             itemCount: fireStoreChats.length,
             itemBuilder: (context, index) {
@@ -302,7 +306,7 @@ class _ChatPageState extends State<ChatPage> {
       /// 스크롤 화면 하단으로 이동
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeOut,
       );
 
