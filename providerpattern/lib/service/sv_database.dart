@@ -136,6 +136,7 @@ class DatabaseService {
 
   /// 그룹 가입/탈퇴 메서드 - Transaction 사용
   Future<bool> toggleGroupJoin(String groupId, String userName, String groupName, String token) async {
+
     DocumentReference userDocumentReference = userCollection.doc(uid);
     DocumentReference groupDocumentReference = groupCollection.doc(groupId);
 
@@ -159,6 +160,15 @@ class DatabaseService {
               "nowMembers": FieldValue.increment(-1)
             });
           } else {
+
+            /// 입장 메시지 전송
+            Map<String, dynamic> chatMessageData = {
+              "message": "$userName has joined the group",
+              "sender": "service",
+              "time": DateTime.now().millisecondsSinceEpoch,
+            };
+
+            sendMessage(groupId, chatMessageData, groupName, token);
             transaction.update(userDocumentReference, {
               "groups": FieldValue.arrayUnion(["${groupId}_$groupName"])
             });
@@ -242,6 +252,15 @@ class DatabaseService {
       } else {
         // User is not the admin, remove from the group
         await FirebaseFirestore.instance.runTransaction((transaction) async {
+
+          /// 퇴장 메시지 전송
+          Map<String, dynamic> chatMessageData = {
+            "message": "$userName has left the group",
+            "sender": "service",
+            "time": DateTime.now().millisecondsSinceEpoch,
+          };
+          sendMessage(groupId, chatMessageData, groupName, token);
+
           transaction.update(userDocumentReference, {
             "groups": FieldValue.arrayRemove(["${groupId}_$groupName"])
           });

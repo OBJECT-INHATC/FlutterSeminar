@@ -51,6 +51,12 @@ class AuthStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 이름 저장
+  saveName(String name) async {
+    this.name = name;
+    notifyListeners();
+  }
+
 }
 
 

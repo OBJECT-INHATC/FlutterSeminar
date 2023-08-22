@@ -40,8 +40,10 @@ class _HomePageState extends State<HomePage> {
 
     fullName = await storage.read(key: 'fullName');
 
-  }
+    if(!mounted) return;
+    Provider.of<AuthStore>(context, listen: false).saveName(fullName!);
 
+  }
   // string manipulation
   String getId(String res) {
     return res.substring(0, res.indexOf("_"));
@@ -58,6 +60,7 @@ class _HomePageState extends State<HomePage> {
     final authStore = Provider.of<AuthStore>(context);
 
     print(groupStore.groups);
+    print(authStore.name);
 
     return Scaffold(
       appBar: AppBar(

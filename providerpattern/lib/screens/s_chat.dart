@@ -270,7 +270,11 @@ class _ChatPageState extends State<ChatPage> {
               return MessageTile(
                 message: fireStoreChats[index].message,
                 sender: fireStoreChats[index].sender,
-                sentByMe: widget.userName == fireStoreChats[index].sender,
+                messageType: widget.userName == fireStoreChats[index].sender
+                  ? MessageType.me
+                      : (fireStoreChats[index].sender == 'service'
+              ? MessageType.service
+                  : MessageType.other),
               );
             },
           );
