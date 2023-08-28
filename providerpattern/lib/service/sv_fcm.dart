@@ -12,6 +12,7 @@ class FcmService {
 
   /// 알림 전송 메서드
   Future<void> sendMessage({
+    required String groupName,
     required List tokenList,
     required String title,
     required String body,
@@ -61,6 +62,7 @@ class FcmService {
               "action": '테스트',
               'groupId': chatMessage.groupId,
               'message': chatMessage.message,
+              'groupName': groupName,
               'sender': chatMessage.sender,
               'time': chatMessage.time.toString() ,
             },

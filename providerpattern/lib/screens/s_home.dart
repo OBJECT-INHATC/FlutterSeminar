@@ -33,15 +33,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   getGroups() async {
+
+    fullName = await storage.read(key: 'fullName');
+
     await DatabaseService(uid: FirebaseAuth.instance.currentUser!.uid)
         .getUserGroups().then((snapshot) {
       Provider.of<GroupStore>(context, listen: false).setGroups(snapshot);
     });
-
-    fullName = await storage.read(key: 'fullName');
-
-    if(!mounted) return;
-    Provider.of<AuthStore>(context, listen: false).saveName(fullName!);
 
   }
   // string manipulation
@@ -102,15 +100,11 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(
               height: 15,
             ),
-            Consumer<AuthStore>(
-              builder: (context, authStore, child) {
-                return Text(
-                  authStore.email, // name이 null인 경우 빈 문자열로 표시
+            Text(
+                  fullName!, // name이 null인 경우 빈 문자열로 표시
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontWeight: FontWeight.bold),
-                );
-              },
-            ),
+                ),
             const SizedBox(
               height: 30,
             ),

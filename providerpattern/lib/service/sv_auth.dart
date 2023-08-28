@@ -54,4 +54,16 @@ class AuthService {
     }
   }
 
+  /// 로그인 여부 확인
+  Future<bool> checkUserAvailable() async{
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if(user != null){
+      return true;
+    }else{
+      return false;
+    }
+
+  }
+
 }

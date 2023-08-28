@@ -11,8 +11,6 @@ class GroupStore extends ChangeNotifier{
   /// 그룹 이름
   String groupName = '';
 
-
-
   /// 그룹 업데이트
   void setGroups(Stream? newGroups) {
     groups = newGroups;

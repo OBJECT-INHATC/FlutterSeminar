@@ -217,6 +217,7 @@ class DatabaseService {
     }
 
     FcmService().sendMessage(
+        groupName: groupName,
         tokenList: tokenList,
         title: "New Message in $groupName",
         body: "${chatMessageData['sender']} : ${chatMessageData['message']}",
